@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { SidebarProvider } from "./sidebarProvider";
 import { RepoManager } from "./repoManager";
 import { createBranchCommand } from "./commands/createBranch";
+import { commitAndPushCommand } from "./commands/commitAndPush";
+import { syncBranchCommand, resyncCommand } from "./commands/syncBranch";
 
 export function activate(context: vscode.ExtensionContext) {
   // Create the central RepoManager (auto-scans, persists selection)
@@ -29,17 +31,19 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("gitSimplifier.createBranch", createBranchCommand(repoManager))
   );
 
-  // Placeholders for later steps
+  // Step 3: Sync Branch with Remote Master (implemented)
   context.subscriptions.push(
-    vscode.commands.registerCommand("gitSimplifier.syncBranch", async () => {
-      vscode.window.showInformationMessage("Sync Branch — coming in Step 3!");
-    })
+    vscode.commands.registerCommand("gitSimplifier.syncBranch", syncBranchCommand(repoManager))
   );
 
+  // Step 3b: Re-sync after conflict resolution
   context.subscriptions.push(
-    vscode.commands.registerCommand("gitSimplifier.commitAndPush", async () => {
-      vscode.window.showInformationMessage("Commit & Push — coming in Step 4!");
-    })
+    vscode.commands.registerCommand("gitSimplifier.resync", resyncCommand(repoManager))
+  );
+
+  // Step 4: Commit & Push (implemented)
+  context.subscriptions.push(
+    vscode.commands.registerCommand("gitSimplifier.commitAndPush", commitAndPushCommand(repoManager))
   );
 
   context.subscriptions.push(

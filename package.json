@@ -49,6 +49,10 @@
                 "title": "Git Simplifier: Sync Branch with Remote Master"
             },
             {
+                "command": "gitSimplifier.resync",
+                "title": "Git Simplifier: Re-sync after conflict resolution"
+            },
+            {
                 "command": "gitSimplifier.commitAndPush",
                 "title": "Git Simplifier: Commit & Push"
             },
