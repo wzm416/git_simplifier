@@ -116,11 +116,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       const branch = await getCurrentBranch(repo);
       const branches = await getLocalBranches(repo);
 
-      // Get short status
-      let changedFiles = 0;
+      // Get changed files list
+      let changedFiles: { status: string; file: string }[] = [];
       try {
         const status = await gitExec(["status", "--porcelain"], repo);
-        changedFiles = status ? status.split("\n").filter(Boolean).length : 0;
+        if (status) {
+          changedFiles = status.split("\n").filter(Boolean).map((line) => ({
+            status: line.substring(0, 2).trim(),
+            file: line.substring(3),
+          }));
+        }
       } catch { /* ignore */ }
 
       // Get unpushed commit count
@@ -409,6 +414,40 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           }
 
           .hidden { display: none; }
+
+          /* ── Changed files list ── */
+          .changed-files {
+            margin: 0 12px 8px;
+            padding: 6px 10px;
+            border-radius: 0 0 6px 6px;
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-top: none;
+            font-size: 12px;
+          }
+          .changed-file {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 0;
+            color: var(--vscode-foreground);
+          }
+          .changed-file .file-status {
+            font-size: 10px;
+            font-weight: 600;
+            width: 16px;
+            text-align: center;
+            flex-shrink: 0;
+          }
+          .changed-file .file-status.modified { color: var(--vscode-editorWarning-foreground); }
+          .changed-file .file-status.added { color: var(--vscode-charts-green); }
+          .changed-file .file-status.deleted { color: var(--vscode-editorError-foreground); }
+          .changed-file .file-status.untracked { color: var(--vscode-charts-green); }
+          .changed-file .file-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
         </style>
       </head>
       <body>
@@ -442,6 +481,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               <div class="branch-meta" id="branchMeta"></div>
             </div>
           </div>
+          <div id="changedFilesList" class="changed-files" style="display:none;"></div>
 
           <!-- Branch actions -->
           <div class="section-header">Branches</div>
@@ -522,8 +562,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             branchName.textContent = s.currentBranch || '(detached)';
 
             let meta = '';
-            if (s.changedFiles > 0) {
-              meta += '<span class="badge badge-changes">' + s.changedFiles + ' changed</span>';
+            const files = s.changedFiles || [];
+            if (files.length > 0) {
+              meta += '<span class="badge badge-changes">' + files.length + ' changed</span>';
             }
             if (s.unpushedCount > 0) {
               meta += '<span class="badge badge-push">↑ ' + s.unpushedCount + '</span>';
@@ -531,13 +572,35 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             if (!meta) { meta = 'Clean'; }
             branchMeta.innerHTML = meta;
 
+            // Changed files list
+            const changedFilesList = document.getElementById('changedFilesList');
+            if (files.length > 0) {
+              changedFilesList.style.display = '';
+              changedFilesList.innerHTML = files.map(f => {
+                const st = f.status;
+                let cls = '';
+                let label = st;
+                if (st === 'M' || st === 'MM') { cls = 'modified'; label = 'M'; }
+                else if (st === 'A' || st === 'AM') { cls = 'added'; label = 'A'; }
+                else if (st === 'D') { cls = 'deleted'; label = 'D'; }
+                else if (st === '??' || st === 'U') { cls = 'untracked'; label = '?'; }
+                return '<div class="changed-file">'
+                  + '<span class="file-status ' + cls + '">' + label + '</span>'
+                  + '<span class="file-name">' + f.file + '</span>'
+                  + '</div>';
+              }).join('');
+            } else {
+              changedFilesList.style.display = 'none';
+              changedFilesList.innerHTML = '';
+            }
+
             // Source control counts
             const scCount = document.getElementById('scCount');
             const changesDesc = document.getElementById('changesDesc');
             const pushDesc = document.getElementById('pushDesc');
 
-            scCount.textContent = s.changedFiles > 0 ? s.changedFiles : '';
-            changesDesc.textContent = s.changedFiles > 0 ? s.changedFiles + ' file(s)' : 'clean';
+            scCount.textContent = files.length > 0 ? files.length : '';
+            changesDesc.textContent = files.length > 0 ? files.length + ' file(s)' : 'clean';
             pushDesc.textContent = s.unpushedCount > 0 ? s.unpushedCount + ' commit(s)' : 'up to date';
 
             // Branch list
