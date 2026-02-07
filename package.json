@@ -1,0 +1,72 @@
+{
+    "name": "git-simplifier",
+    "displayName": "Git Simplifier",
+    "description": "A VS Code extension to simplify Git branch management using git worktree",
+    "version": "0.0.1",
+    "publisher": "wzm416",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": [
+        "SCM Providers",
+        "Other"
+    ],
+    "activationEvents": [
+        "onView:gitSimplifierView",
+        "*"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "git-simplifier",
+                    "title": "Git Simplifier",
+                    "icon": "media/git-branch.svg"
+                }
+            ]
+        },
+        "views": {
+            "git-simplifier": [
+                {
+                    "id": "gitSimplifierView",
+                    "name": "Branches",
+                    "type": "webview"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "gitSimplifier.selectRepo",
+                "title": "Git Simplifier: Select Repository"
+            },
+            {
+                "command": "gitSimplifier.createBranch",
+                "title": "Git Simplifier: Create New Branch"
+            },
+            {
+                "command": "gitSimplifier.syncBranch",
+                "title": "Git Simplifier: Sync Branch with Remote Master"
+            },
+            {
+                "command": "gitSimplifier.commitAndPush",
+                "title": "Git Simplifier: Commit & Push"
+            },
+            {
+                "command": "gitSimplifier.removeBranch",
+                "title": "Git Simplifier: Remove Local Branch"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "@types/vscode": "^1.85.0",
+        "typescript": "^5.3.0"
+    }
+}
