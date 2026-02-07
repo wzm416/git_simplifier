@@ -53,8 +53,16 @@
                 "title": "Git Simplifier: Re-sync after conflict resolution"
             },
             {
-                "command": "gitSimplifier.commitAndPush",
-                "title": "Git Simplifier: Commit & Push"
+                "command": "gitSimplifier.switchBranch",
+                "title": "Git Simplifier: Switch Branch"
+            },
+            {
+                "command": "gitSimplifier.commit",
+                "title": "Git Simplifier: Commit"
+            },
+            {
+                "command": "gitSimplifier.push",
+                "title": "Git Simplifier: Push"
             },
             {
                 "command": "gitSimplifier.removeBranch",
