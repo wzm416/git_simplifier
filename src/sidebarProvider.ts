@@ -42,11 +42,17 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         case "createBranch":
           vscode.commands.executeCommand("gitSimplifier.createBranch");
           break;
+        case "switchBranch":
+          vscode.commands.executeCommand("gitSimplifier.switchBranch");
+          break;
         case "syncBranch":
           vscode.commands.executeCommand("gitSimplifier.syncBranch");
           break;
-        case "commitAndPush":
-          vscode.commands.executeCommand("gitSimplifier.commitAndPush");
+        case "commit":
+          vscode.commands.executeCommand("gitSimplifier.commit");
+          break;
+        case "push":
+          vscode.commands.executeCommand("gitSimplifier.push");
           break;
         case "removeBranch":
           vscode.commands.executeCommand("gitSimplifier.removeBranch");
@@ -169,14 +175,28 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         </div>
 
         <div class="section">
+          <div class="description">Switch to a different branch</div>
+          <button onclick="send('switchBranch')">🔀 Switch Branch</button>
+        </div>
+
+        <div class="section">
           <div class="description">Sync a local branch with remote master</div>
           <button onclick="send('syncBranch')">🔄 Sync with Master</button>
         </div>
 
+        <hr class="divider" />
+
         <div class="section">
-          <div class="description">Commit & push changes to remote</div>
-          <button onclick="send('commitAndPush')">🚀 Commit & Push</button>
+          <div class="description">Stage and commit changes</div>
+          <button onclick="send('commit')">💾 Commit</button>
         </div>
+
+        <div class="section">
+          <div class="description">Review and push commits to remote</div>
+          <button onclick="send('push')">🚀 Push</button>
+        </div>
+
+        <hr class="divider" />
 
         <div class="section">
           <div class="description">Remove a local branch and its worktree</div>

@@ -3,15 +3,15 @@ import { gitExec, getCurrentBranch } from "../gitUtils";
 import { RepoManager } from "../repoManager";
 
 /**
- * Commit & Push command:
+ * Commit command (no auto-push):
  *  1. Detect the current branch
  *  2. Show a summary of changed files
  *  3. Let user choose which files to stage (or stage all)
  *  4. Ask for a commit message
  *  5. Commit
- *  6. Push to remote (auto-create upstream if first push)
+ *  6. Ask if user wants to push now
  */
-export function commitAndPushCommand(repoManager: RepoManager) {
+export function commitCommand(repoManager: RepoManager) {
   return async (): Promise<void> => {
     try {
       const repoRoot = await repoManager.getRepoRoot();
@@ -63,7 +63,7 @@ export function commitAndPushCommand(repoManager: RepoManager) {
           },
         ],
         {
-          placeHolder: `Commit & Push to '${branch}' — what to include?`,
+          placeHolder: `Commit on '${branch}' — what to include?`,
         }
       );
 
@@ -122,26 +122,122 @@ export function commitAndPushCommand(repoManager: RepoManager) {
         }
       );
 
-      // 6. Push to remote
+      // 6. Ask user if they want to push
+      const pushNow = await vscode.window.showInformationMessage(
+        `✅ Committed on '${branch}'. Push to remote?`,
+        "Push Now",
+        "Later"
+      );
+
+      if (pushNow === "Push Now") {
+        await vscode.commands.executeCommand("gitSimplifier.push");
+      }
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`Commit failed: ${err.message}`);
+    }
+  };
+}
+
+/**
+ * Push command:
+ *  1. Show unpushed commits for the current branch
+ *  2. Let user confirm
+ *  3. Push (auto-create upstream if first push)
+ */
+export function pushCommand(repoManager: RepoManager) {
+  return async (): Promise<void> => {
+    try {
+      const repoRoot = await repoManager.getRepoRoot();
+      const branch = await getCurrentBranch(repoRoot);
+
+      // 1. Check if there's an upstream
+      const hasUpstream = await checkUpstreamExists(repoRoot, branch);
+
+      // 2. Get unpushed commits
+      let unpushedCommits: string[] = [];
+      if (hasUpstream) {
+        const log = await gitExec(
+          ["log", `origin/${branch}..HEAD`, "--oneline"],
+          repoRoot
+        );
+        unpushedCommits = log.split("\n").filter(Boolean);
+      } else {
+        // No upstream — all commits are "unpushed"
+        const log = await gitExec(["log", "--oneline"], repoRoot);
+        unpushedCommits = log.split("\n").filter(Boolean);
+      }
+
+      if (unpushedCommits.length === 0) {
+        vscode.window.showInformationMessage("Nothing to push — already up to date with remote.");
+        return;
+      }
+
+      // 3. Show commits and ask for confirmation
+      const commitItems = unpushedCommits.map((line) => {
+        const spaceIdx = line.indexOf(" ");
+        const hash = line.substring(0, spaceIdx);
+        const message = line.substring(spaceIdx + 1);
+        return {
+          label: `$(git-commit) ${message}`,
+          description: hash,
+        };
+      });
+
+      const upstreamNote = hasUpstream
+        ? `Push ${unpushedCommits.length} commit(s) to origin/${branch}`
+        : `First push — will create origin/${branch}`;
+
+      // Add a header item showing the summary
+      const confirmItems = [
+        {
+          label: `$(cloud-upload) ${upstreamNote}`,
+          description: "Confirm to push",
+          kind: vscode.QuickPickItemKind.Separator,
+        } as any,
+        ...commitItems,
+      ];
+
+      // Use showQuickPick to display commits, with a confirm action
+      const confirm = await vscode.window.showQuickPick(
+        [
+          {
+            label: `$(rocket) Push ${unpushedCommits.length} commit(s) to remote`,
+            description: hasUpstream ? `origin/${branch}` : `(will create origin/${branch})`,
+            detail: unpushedCommits.map((c) => `  ${c}`).join("\n"),
+            action: "push",
+          },
+          {
+            label: "$(close) Cancel",
+            description: "",
+            action: "cancel",
+          },
+        ],
+        {
+          placeHolder: `${unpushedCommits.length} unpushed commit(s) on '${branch}'`,
+        }
+      );
+
+      if (!confirm || confirm.action === "cancel") {
+        return;
+      }
+
+      // 4. Push
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: `Pushing '${branch}' to remote...` },
         async () => {
-          // Check if upstream exists
-          const hasUpstream = await checkUpstreamExists(repoRoot, branch);
           if (hasUpstream) {
             await gitExec(["push"], repoRoot);
           } else {
-            // First push — create upstream tracking branch
             await gitExec(["push", "-u", "origin", branch], repoRoot);
           }
         }
       );
 
       vscode.window.showInformationMessage(
-        `✅ Committed and pushed '${branch}' to remote!`
+        `✅ Pushed ${unpushedCommits.length} commit(s) on '${branch}' to remote!`
       );
     } catch (err: any) {
-      vscode.window.showErrorMessage(`Commit & Push failed: ${err.message}`);
+      vscode.window.showErrorMessage(`Push failed: ${err.message}`);
     }
   };
 }
