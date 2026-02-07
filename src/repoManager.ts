@@ -11,9 +11,18 @@ import { gitExec } from "./gitUtils";
 export class RepoManager {
   private _selectedRepo: string | undefined;
   private _onDidChangeRepo = new vscode.EventEmitter<string | undefined>();
+  private _onDidGitChange = new vscode.EventEmitter<void>();
 
   /** Fires when the selected repo changes. */
   public readonly onDidChangeRepo = this._onDidChangeRepo.event;
+
+  /** Fires when a command modifies git state (branch, commit, etc). */
+  public readonly onDidGitChange = this._onDidGitChange.event;
+
+  /** Call this from any command after it modifies git state. */
+  public notifyGitChange(): void {
+    this._onDidGitChange.fire();
+  }
 
   constructor(private readonly _context: vscode.ExtensionContext) {
     // Restore last selection from workspace state

@@ -106,6 +106,7 @@ export function syncBranchCommand(repoManager: RepoManager) {
         );
 
         // Merge succeeded — no conflicts!
+        repoManager.notifyGitChange();
         vscode.window.showInformationMessage(
           `✅ Sync success! Branch '${branch}' is now up to date with ${defaultRemote}.`
         );

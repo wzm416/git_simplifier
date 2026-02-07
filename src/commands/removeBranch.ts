@@ -120,6 +120,7 @@ export function removeBranchCommand(repoManager: RepoManager) {
         }
       );
 
+      repoManager.notifyGitChange();
       vscode.window.showInformationMessage(
         `✅ Removed ${selected.length} branch(es): ${branchNames}`
       );

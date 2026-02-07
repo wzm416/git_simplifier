@@ -7,14 +7,38 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "gitSimplifierView";
 
   private _view?: vscode.WebviewView;
+  private _gitHeadWatcher?: vscode.FileSystemWatcher;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _repoManager: RepoManager
   ) {
     this._repoManager.onDidChangeRepo(() => {
+      this._watchGitHead();
       this._refreshView();
     });
+    this._repoManager.onDidGitChange(() => {
+      this._refreshView();
+    });
+
+    // Start watching if repo already selected
+    this._watchGitHead();
+  }
+
+  /**
+   * Watch .git/HEAD so the sidebar auto-updates when branches change
+   * externally (e.g. via terminal: git checkout -b, git checkout, etc.)
+   */
+  private _watchGitHead(): void {
+    this._gitHeadWatcher?.dispose();
+    const repo = this._repoManager.selectedRepo;
+    if (!repo) { return; }
+
+    const pattern = new vscode.RelativePattern(
+      vscode.Uri.file(path.join(repo, ".git")), "HEAD"
+    );
+    this._gitHeadWatcher = vscode.workspace.createFileSystemWatcher(pattern);
+    this._gitHeadWatcher.onDidChange(() => this._refreshView());
   }
 
   public resolveWebviewView(

@@ -195,6 +195,7 @@ export function createBranchCommand(repoManager: RepoManager) {
       const worktreeUri = vscode.Uri.file(worktreePath);
       await vscode.commands.executeCommand("vscode.openFolder", worktreeUri, { forceNewWindow: true });
 
+      repoManager.notifyGitChange();
       vscode.window.showInformationMessage(
         `✅ Branch '${newBranchName}' created and opened in a new window!`
       );

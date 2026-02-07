@@ -123,6 +123,7 @@ export function commitCommand(repoManager: RepoManager) {
       );
 
       // 6. Ask user if they want to push
+      repoManager.notifyGitChange();
       const pushNow = await vscode.window.showInformationMessage(
         `✅ Committed on '${branch}'. Push to remote?`,
         "Push Now",
@@ -233,6 +234,7 @@ export function pushCommand(repoManager: RepoManager) {
         }
       );
 
+      repoManager.notifyGitChange();
       vscode.window.showInformationMessage(
         `✅ Pushed ${unpushedCommits.length} commit(s) on '${branch}' to remote!`
       );
