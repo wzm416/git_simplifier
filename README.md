@@ -1,77 +1,150 @@
 # Git Simplifier
 
-A VS Code extension that provides a simple UI to manage Git branches locally using **git worktree**, enabling parallel work across multiple branches simultaneously.
+A VS Code / Cursor extension that provides a simple, elegant UI to manage Git branches locally using **git worktree**, enabling parallel work across multiple branches simultaneously.
 
 ---
 
 ## Features
 
-### 1. Create New Branch (via Git Worktree)
+### 📂 Repository Selector
 
-A "Create" button with a dropdown offering three options:
+- Auto-scans your workspace for git repositories
+- Pick which repo to work with from a dropdown
+- Persists your selection across sessions
 
-- **From `origin/master`** — Create a branch fully synced with remote master.
-- **From an existing local branch** — Create a branch based on a selected local branch (dependent branch).
-- **Clone a remote branch** — Clone a remote branch as-is (useful for reproducing bugs at a specific version).
+### ➕ Create New Branch (via Git Worktree)
 
-After selection:
+Three branch creation modes:
 
-- A new VS Code window opens with the new branch checked out in its own worktree directory.
+- **From `origin/master`** — Create a branch fully synced with remote master (auto-detects `main` vs `master`)
+- **From an existing local branch** — Branch off a selected local branch
+- **Clone a remote branch** — Clone a remote branch as-is (great for reproducing bugs at a specific version)
 
-### 2. Sync Local Branch with Remote Master
+Each new branch gets its own **worktree directory** and opens in a **new Cursor/VS Code window** for parallel development.
 
-- Dropdown to select which local branch to sync.
-- **No conflicts** → auto-merge, commit, and show "Sync Success."
-- **Conflicts** → open a new VS Code window on that branch for manual resolution; button changes to "Re-sync." After conflicts are resolved, user clicks "Re-sync" to commit.
+### 🔀 Switch Branch
 
-### 3. Commit & Push
+- See all local branches with worktree status
+- Worktree branches open in a new window
+- Non-worktree branches checkout in place (auto-stashes uncommitted changes)
 
-- Commit changes on the current branch.
-- Push to remote.
-- If it's the first push, automatically create the remote tracking branch.
+### 🔄 Sync with Remote Master
 
-### 4. Remove Local Branch
+- Pick any local branch to sync
+- Auto-fetches + merges `origin/master` (or `origin/main`)
+- **No conflicts** → auto-commits, shows success
+- **Conflicts** → opens worktree in new window for manual resolution, then use **Re-sync** to finalize
 
-- Delete a local branch and its associated worktree cleanly.
+### 💾 Commit
+
+- View changed files summary
+- Stage all, pick individual files, or commit already-staged files
+- Enter commit message
+- After commit, optionally push right away or defer to later
+
+### 🚀 Push
+
+- Preview all unpushed commits before pushing
+- Confirm before push
+- Auto-creates remote tracking branch on first push (`git push -u origin <branch>`)
+
+### 🗑️ Remove Branch
+
+- Multi-select branches to delete
+- Automatically removes associated worktrees
+- Option to also delete the remote tracking branch
+- Prevents deleting the currently checked-out branch
 
 ---
 
-## Implementation Plan
+## Sidebar UI
 
-### Step 1: Scaffold the VS Code Extension
+The sidebar features a GitLens-inspired design:
 
-- Initialize the extension project (package.json, tsconfig, etc.).
-- Register the extension's Sidebar/Webview panel.
-- Create a basic Tree View or Webview with placeholder buttons.
-
-### Step 2: Create New Branch (Worktree)
-
-- Implement the three branch creation options using `git worktree add`.
-- Add Quick Pick dropdowns for branch selection.
-- Open a new VS Code window at the worktree path after creation.
-
-### Step 3: Sync Branch with Remote Master
-
-- List local worktree branches in a Quick Pick dropdown.
-- Run `git fetch` + `git merge origin/master`.
-- Detect conflicts: if none, auto-commit; if conflicts, open the worktree in a new window and provide a "Re-sync" button.
-
-### Step 4: Commit & Push
-
-- Stage all changes, commit with a user-provided message.
-- Push to remote; if no upstream exists, run `git push -u origin <branch>`.
-
-### Step 5: Remove Local Branch
-
-- Remove the worktree (`git worktree remove`).
-- Delete the branch (`git branch -D`).
-- Refresh the UI.
+- **Current work item** — shows active branch with change/push badges
+- **Branches section** — create, switch, sync, remove branches
+- **Source Control section** — commit and push with live status counts
+- **Local Branches list** — at-a-glance view of all branches
 
 ---
 
 ## Tech Stack
 
 - **Language**: TypeScript
-- **Platform**: VS Code Extension API
+- **Platform**: VS Code / Cursor Extension API
 - **Git**: Executed via `child_process` (spawning git commands)
-- **UI**: VS Code TreeView + Quick Picks + Webview (for sidebar panel)
+- **UI**: VS Code Webview sidebar with custom HTML/CSS
+
+---
+
+## Development
+
+### Prerequisites
+
+- Node.js ≥ 18
+- npm
+
+### Setup
+
+```bash
+cd git_simplifier
+npm install
+npm run compile
+```
+
+### Test locally
+
+1. Open the `git_simplifier` folder in Cursor / VS Code
+2. Press `F5` to launch the Extension Development Host
+3. Or package and install manually:
+
+```bash
+npx @vscode/vsce package --no-dependencies --allow-star-activation --allow-missing-repository
+```
+
+Then install: `Cmd+Shift+P` → "Extensions: Install from VSIX"
+
+---
+
+## Publishing
+
+### 1. Create a Publisher Account
+
+- Go to [Azure DevOps](https://dev.azure.com) and sign in
+- Visit the [Visual Studio Marketplace Publisher Management](https://marketplace.visualstudio.com/manage)
+- Create a publisher (e.g., `wzm416`)
+
+### 2. Generate a Personal Access Token (PAT)
+
+- In Azure DevOps → User Settings → Personal Access Tokens
+- Create a new token with **Marketplace (Manage)** scope
+- Save the token securely
+
+### 3. Login with vsce
+
+```bash
+npx @vscode/vsce login wzm416
+# Paste your Azure DevOps PAT when prompted
+```
+
+### 4. Publish
+
+```bash
+npx @vscode/vsce publish
+```
+
+### 5. Update Version (for future releases)
+
+```bash
+npx @vscode/vsce publish minor   # 0.0.1 → 0.1.0
+npx @vscode/vsce publish patch   # 0.0.1 → 0.0.2
+```
+
+The extension will be live at:
+**<https://marketplace.visualstudio.com/items?itemName=wzm416.git-simplifier>**
+
+---
+
+## License
+
+MIT

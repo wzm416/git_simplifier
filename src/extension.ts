@@ -5,6 +5,7 @@ import { createBranchCommand } from "./commands/createBranch";
 import { commitCommand, pushCommand } from "./commands/commitAndPush";
 import { syncBranchCommand, resyncCommand } from "./commands/syncBranch";
 import { switchBranchCommand } from "./commands/switchBranch";
+import { removeBranchCommand } from "./commands/removeBranch";
 
 export function activate(context: vscode.ExtensionContext) {
   // Create the central RepoManager (auto-scans, persists selection)
@@ -57,10 +58,9 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("gitSimplifier.push", pushCommand(repoManager))
   );
 
+  // Remove Branch
   context.subscriptions.push(
-    vscode.commands.registerCommand("gitSimplifier.removeBranch", async () => {
-      vscode.window.showInformationMessage("Remove Branch — coming in Step 5!");
-    })
+    vscode.commands.registerCommand("gitSimplifier.removeBranch", removeBranchCommand(repoManager))
   );
 
   console.log("Git Simplifier is now active!");
